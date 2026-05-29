@@ -177,7 +177,7 @@
       overflow: hidden;
     }
 
-    #chart { width: 100%; }
+    #chart { width: 100%; min-height: 640px; }
 
     .shape-row {
       padding: 11px 22px;
@@ -552,6 +552,14 @@ function buildTraces() {
     };
   });
 
+  // Invisible anchor trace — keeps axes stable when all data is filtered out
+  traces.push({
+    type: 'scatter', mode: 'markers',
+    x: [-2.7, 3.6], y: [-2.8, 2.2],
+    marker: { size: 0, opacity: 0, color: 'rgba(0,0,0,0)' },
+    hoverinfo: 'skip', showlegend: false,
+  });
+
   // centroid reference lines
   traces.push(
     { type:'scatter', mode:'lines',
@@ -606,6 +614,8 @@ const layout = {
   hovermode: 'closest',
   font:{ family:'Inter, sans-serif' },
   transition:{ duration:280, easing:'cubic-in-out' },
+  uirevision: 'static',
+  autosize: true,
 };
 
 const config = {
@@ -648,6 +658,13 @@ document.getElementById('close-info').addEventListener('click', () =>
   document.getElementById('info-card').classList.remove('open')
 );
 
+// ═══════════════════════════════════════════ SAFE REDRAW
+function redraw() {
+  // Always clone layout with explicit height to prevent collapse on GitHub Pages
+  const l = Object.assign({}, layout, { height: 640, uirevision: 'static' });
+  Plotly.react('chart', buildTraces(), l, config);
+}
+
 // ═══════════════════════════════════════════ FILTER CHIPS
 document.querySelectorAll('.chip').forEach(chip => {
   chip.addEventListener('click', () => {
@@ -662,7 +679,7 @@ document.querySelectorAll('.chip').forEach(chip => {
       set.add(val);
       chip.classList.remove('off'); chip.classList.add('active');
     }
-    Plotly.react('chart', buildTraces(), layout, config);
+    redraw();
   });
 });
 
@@ -675,7 +692,7 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   document.querySelectorAll('.chip').forEach(c => {
     c.classList.add('active'); c.classList.remove('off');
   });
-  Plotly.react('chart', buildTraces(), layout, config);
+  redraw();
 });
 
 // ═══════════════════════════════════════════ SEARCH
@@ -684,7 +701,7 @@ document.getElementById('search').addEventListener('input', e => {
   clearTimeout(timer);
   timer = setTimeout(() => {
     state.search = e.target.value;
-    Plotly.react('chart', buildTraces(), layout, config);
+    redraw();
   }, 160);
 });
 </script>
